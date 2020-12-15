@@ -17,17 +17,19 @@ abstract class BasePreferenceManager {
      * @param block             callback function - Optional
      */
     suspend fun clearAll(dataStore: Array<out DataStore<Preferences>>, block: ((Boolean) -> Unit)? = null) {
-        try {
-            for (data in dataStore) {
-                data.edit { it.clear() }
-            }
-            block?.let {
-                withContext(Dispatchers.Main) { it(true) }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            block?.let {
-                withContext(Dispatchers.Main) { it(false) }
+        withContext(Dispatchers.IO) {
+            try {
+                for (data in dataStore) {
+                    data.edit { it.clear() }
+                }
+                block?.let {
+                    withContext(Dispatchers.Main) { it(true) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                block?.let {
+                    withContext(Dispatchers.Main) { it(false) }
+                }
             }
         }
     }
@@ -42,18 +44,20 @@ abstract class BasePreferenceManager {
      */
     suspend inline fun <reified T : Any> save(key: String, value: T, dataStore: DataStore<Preferences>,
         noinline block: ((Boolean) -> Unit)? = null) {
-        try {
-            val dataStoreKey = preferencesKey<T>(key)
-            dataStore.edit { preference ->
-                preference[dataStoreKey] = value
-                block?.let {
-                    withContext(Dispatchers.Main) { it(true) }
+        withContext(Dispatchers.IO) {
+            try {
+                val dataStoreKey = preferencesKey<T>(key)
+                dataStore.edit { preference ->
+                    preference[dataStoreKey] = value
+                    block?.let {
+                        withContext(Dispatchers.Main) { it(true) }
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            block?.let {
-                withContext(Dispatchers.Main) { it(false) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                block?.let {
+                    withContext(Dispatchers.Main) { it(false) }
+                }
             }
         }
     }
@@ -67,13 +71,19 @@ abstract class BasePreferenceManager {
      * @return  T?          Generic typed value or null if not found
      */
     suspend inline fun <reified T : Any> getValue(key: String, datastore: DataStore<Preferences>): T? {
-        return try {
-            val dataStoreKey = preferencesKey<T>(key)
-            val preferences = datastore.data.first()
-            preferences[dataStoreKey] as T
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        return withContext(Dispatchers.IO) {
+            try {
+                val dataStoreKey = preferencesKey<T>(key)
+                val preferences = datastore.data.first()
+                withContext(Dispatchers.Main) {
+                    preferences[dataStoreKey] as T
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    null
+                }
+            }
         }
     }
 
