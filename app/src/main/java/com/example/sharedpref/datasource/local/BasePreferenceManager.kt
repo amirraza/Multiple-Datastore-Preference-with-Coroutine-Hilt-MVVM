@@ -95,7 +95,7 @@ abstract class BasePreferenceManager {
      *
      * @return  Flow<T>     Generic typed value as flow
      */
-    suspend fun <T> getValueAsFlow(key: String, datastore: DataStore<Preferences>): Flow<T> =
+    fun <T> getValueAsFlow(key: String, datastore: DataStore<Preferences>): Flow<T> =
         datastore.data
             .catch { exception ->
                 if (exception is IOException) {
