@@ -95,7 +95,7 @@ abstract class BasePreferenceManager {
      *
      * @return  Flow<T>     Generic typed value as flow
      */
-    fun <T> getValueAsFlow(key: String, datastore: DataStore<Preferences>): Flow<T> =
+    inline fun <reified T : Any> getValueAsFlow(key: String, datastore: DataStore<Preferences>): Flow<T> =
         datastore.data
             .catch { exception ->
                 if (exception is IOException) {
@@ -106,7 +106,7 @@ abstract class BasePreferenceManager {
                 }
             }
             .map { preference ->
-                val dataStoreKey = preferencesKey<String>(key)
+                val dataStoreKey = preferencesKey<T>(key)
                 preference[dataStoreKey] as T
             }
 }
